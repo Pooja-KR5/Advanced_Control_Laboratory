@@ -1,0 +1,156 @@
+clear
+
+ 
+
+%% Plant definition
+
+Vg = 24;
+
+Vo = 15;
+
+R = 10;
+
+L = 0.43e-3;
+
+C = 33e-6;
+
+D = 15/39;
+
+ 
+
+gain = 0.25;
+
+ 
+
+num = [(-D*L*Vg)/(1-D)^2, R*Vg];
+
+den = [R*L*C, L, ((1-D)^2)*R];
+
+ 
+
+G = gain*tf(num, den);
+
+ 
+
+%% Transient Specifications
+
+PM = 25*pi/180;
+
+GM = 10;
+
+ 
+
+%% Steady state specifications
+
+Kp_desired = 99;
+
+ 
+
+%% Compensator design
+
+Kp_uncompensated = 15.85;
+
+K_prime = Kp_desired/Kp_uncompensated;
+
+ 
+
+opt = bodeoptions;
+
+opt.FreqUnits = 'kHz';
+
+figure(1), margin(K_prime*G,opt); grid on;
+
+ 
+
+fprintf("Choose the new gain crossover frequency such that the phase angle is %f \n\n", (pi+PM)*180/pi);
+
+pause
+
+fprintf("Compute the gain at the chosen new gain crossover frequency \n\n");
+
+pause
+
+ 
+
+magnitude = 30;
+
+beta = 1/(10^(-magnitude/20));
+
+ 
+
+omg = 2000;
+
+tau = 1/omg;
+
+ 
+
+ 
+
+Glag = tf([tau,1],[beta*tau,1])
+
+ 
+
+ 
+
+alfa = 1/beta;
+
+phi_m = asin((1-alfa)/(1+alfa));
+
+ 
+
+new_mag = -10*log10(beta);
+
+ 
+
+opt = bodeoptions;
+
+opt.FreqUnits = 'kHz';
+
+figure(2), margin(K_prime*Glag*G,opt)
+
+ 
+
+fprintf("Find the frequency at which the gain is %f \n\n", new_mag);
+
+pause
+
+ 
+
+f_m     = 11.5e3;
+
+omega_m = 2*pi*f_m;
+
+ 
+
+T2 = sqrt(beta)/omega_m;
+
+ 
+
+Glead =  tf([T2,1],[T2/beta,1])
+
+ 
+
+opt = bodeoptions;
+
+opt.FreqUnits = 'kHz';
+
+figure(3), margin(K_prime*Glag*Glead*G,opt)
+
+ 
+
+H = feedback(K_prime*Glag*Glead*G,1);
+
+figure(4), step(H); grid on;
+
+xlim([0,0.1]);
+
+ 
+
+fb = (1/(2*pi))*bandwidth(feedback(K_prime*Glag*Glead*G,1))
+
+ 
+
+figure(5), bode(feedback(K_prime*Glag*Glead*G,1), opt); grid on;
+
+
+ 
