@@ -1,0 +1,47 @@
+%%Flexible link
+
+global A B C D K
+
+%Parameter values
+Kstiff = 1.3;
+Jeq = 0.0021;
+Jarm = 0.0038;
+Etam = 0.69;
+Etag = 0.9;
+Kt = 0.0077;
+Km = 0.0077;
+Kg = 70;
+Rm = 2.6;
+Beq = 0.015;
+
+
+A = [0, 0, 1, 0;
+     0, 0, 0, 1;
+     0, Kstiff/Jeq, (-Etam*Etag*Kt*Km*Kg^2+Beq*Rm)/(Jeq*Rm), 0;
+     0, -Kstiff*(Jeq+Jarm)/(Jeq*Jarm), (Etam*Etag*Kt*Km*Kg^2+Beq*Rm)/(Jeq*Rm), 0];
+B = [0; 0; (Etam*Etag*Kt*Kg)/(Jeq*Rm); (-Etam*Etag*Kt*Kg)/(Jeq*Rm)];
+C = eye(4);
+D = [0; 0; 0; 0];
+
+Q = [1, 0, 0, 0;
+     0, 1, 0, 0;
+     0, 0, 1, 0;
+     0, 0, 0, 1];
+
+R = 1;
+
+[K, S, P] = lqr(A, B, Q, R);
+sys = ss(A-B*K,B,C,D);
+
+[y,tOut] = step(sys,[0:0.01:5]);
+
+figure(1), subplot(4,1,1), plot(tOut,y(:,1)); grid on; hold on; xlabel("Time (s)"); ylabel("\theta (rad)");
+figure(1), subplot(4,1,2), plot(tOut,y(:,2)); grid on; hold on; xlabel("Time (s)"); ylabel("\alpha (rad)");
+figure(1), subplot(4,1,3), plot(tOut,y(:,3)); grid on; hold on; xlabel("Time (s)"); ylabel("\theta_{dot} (rad)");
+figure(1), subplot(4,1,4), plot(tOut,y(:,4)); grid on; hold on; xlabel("Time (s)"); ylabel("\alpha_{dot} (rad)");
+
+figure(2), plot(tOut,-(K(1)*y(:,1)+K(2)*y(:,2)+K(3)*y(:,3)+K(4)*y(:,4))); grid on; hold on;
+
+
+
+
