@@ -1,0 +1,69 @@
+clc;
+clear all; 
+close all;
+syms x1 x2 x3 x4
+M=2.4
+m=0.23
+l=0.36 
+g=9.81 
+num1=0.05
+b2=0.005
+FF=[ x3 ;x4 ;(m*x4*x4*l*sin(x2)-m*g*sin(x2)*cos(x2)-num1*x3)/(M+m*sin(x2)*sin(x2)); (g*(M+m)*sin(x2)+ num1*x3*cos(x2)-(b2*x4*(M+m))/(m*l)-cos(x2)*(m* x4*x4*l*sin(x2)-0*m*g*sin(x2)*cos(x2)))/(l*(M+m*sin(x2)*sin(x2)))];
+% %FF=[x3 ;
+%    x4;
+%    ((m*l*(x4^2)*sin(x2)-m*g*sin(x2)*cos(x2)+(-b*x3))/(M+m*sin(x2)*sin(x2)));
+%    (m*g*l*(M+m)*sin(x2)-m^2*l^2*x4^2*sin(x2)*cos(x2)-m*l*cos(x2)*(-b*x3))/(m*l^2*(M+m*sin(x2)*sin(x2)))];
+X=[x1;x2;x3;x4];
+J=jacobian(FF,X);
+
+%crane control
+%for eq point(0,pi,0,0)
+A1 = double(subs(J,X,[0;pi;0;0]));
+B1=[0;
+    0; 
+    1/M;
+    1/(M*l)]
+C1=[0 1 0 0] %to find transfer func wrt angle
+C2=[1 0 0 0] %to find transfer func wrt position
+D1=[0]
+[num,den]=ss2tf(A1,B1,C1,D1)
+%transfer func wrt angle
+G1=tf(num,den)
+[num1,den1]=ss2tf(A1,B1,C2,D1)
+%transfer func wrt position
+G2=tf(num1,den1)
+%finding stability
+e1=eig(A1)
+
+%for inverted pendulum
+%for eq point(0,0,0,0)
+A11 = double(subs(J,X,[0;0;0;0]));
+B11=[0;
+    0; 
+    1/M;
+   -1/(M*l)]
+C11=[0 1 0 0] %to find transfer func wrt angle
+C22=[1 0 0 0] %to find transfer func wrt position
+D11=[0]
+[num2,den2]=ss2tf(A11,B11,C11,D11)
+%transfer func wrt angle
+T3=tf(num2,den2)
+[num3,den3]=ss2tf(A11,B11,C22,D11)
+%transfer func wrt position
+T4=tf(num3,den3)
+%finding stability
+e2=eig(A11)
+%controllability
+Co= ctrb(A11,B11)
+rank(Co)
+rlocus(T3)
+p=[-3+4*i,-3-4*i]
+
+T1=tf([-1.16],[1 0.183 -29.87])
+[An,Bn,Cn,Dn] = tf2ss([-1.16],[1 0.183 -29.87])
+k=place(An,Bn,p)
+Tnew= ss(An-Bn*k)
+e3=eig(Tnew)
+
+
+
